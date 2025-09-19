@@ -626,6 +626,16 @@ async fn submit_to_ai(
             }
             Err(e) => {
                 log::error!("llm error: {:#?}", e);
+                let err_text = "抱歉，我没能理解您的回复。请您换种表达方式重新说一下".to_string();
+                pool.send(id, WsCommand::StartAudio(err_text.clone()))
+                    .await?;
+                match tts_and_send(pool, id, err_text).await {
+                    Ok(_) => {}
+                    Err(e) => {
+                        log::error!("tts error:{e}");
+                    }
+                }
+                pool.send(id, WsCommand::EndAudio).await?;
                 break;
             }
         }
